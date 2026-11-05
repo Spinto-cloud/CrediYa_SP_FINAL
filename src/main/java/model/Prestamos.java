@@ -1,6 +1,9 @@
 package model;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Prestamos {
     
@@ -12,6 +15,8 @@ public class Prestamos {
     private int cuotas;
     private LocalDate fechaInicio;
     private String estado;
+    
+    private ArrayList<Cuotas> listaCuotas = new ArrayList<>();
     
     public Prestamos(int idPrestamo, Cliente cliente,
                     Empleado empleado, double monto,
@@ -26,27 +31,120 @@ public class Prestamos {
         this.cuotas = cuotas;
         this.fechaInicio = fechaInicio;
         this.estado = "pendiente";
+    
+        generarCuotas();
+    }
+    
+    private double redondear(double valor) {
+        return Math.round(valor * 100.0) / 100.0;
+    }
+
+    private void generarCuotas() {
+
+        double tasa = tasaInteres / 100.0;
+
+        double valorCuota;
+
+        if (tasa == 0) {
+            valorCuota = monto / cuotas;
+        } else {
+            valorCuota = monto * tasa
+                    / (1 - Math.pow(1 + tasa, -cuotas));
+        }
+
+        valorCuota = redondear(valorCuota);
+
+        double saldoCapital = monto;
+
+        for (int i = 1; i <= cuotas; i++) {
+
+            double interes = redondear(saldoCapital * tasa);
+
+            double capital = valorCuota - interes;
+
+            double valor;
+
+            if (i == cuotas) {
+
+                capital = saldoCapital;
+                valor = redondear(capital + interes);
+
+            } else {
+
+                capital = redondear(capital);
+                valor = redondear(interes + capital);
+            }
+
+            Cuotas nuevaCuota = new Cuotas(
+                    i,
+                    valor,
+                    interes,
+                    capital,
+                    fechaInicio.plusMonths(i)
+            );
+
+            listaCuotas.add(nuevaCuota);
+
+            saldoCapital = redondear(saldoCapital - capital);
+        }
     }
     
     public double calcularTotal() {
-        return monto + (monto * tasaInteres / 100);
+
+        double total = 0;
+
+        for (Cuotas cuota : listaCuotas) {
+            total += cuota.getValor();
+        }
+
+        return redondear(total);
     }
     
     public double calcularCuotaMensual() {
-        return calcularTotal() / cuotas;
-    }    
+
+        if (listaCuotas.isEmpty()) {
+            return 0;
+        }
+
+        return listaCuotas.get(0).getValor();
+    }
+
+    public LocalDate calcularFechaVencimiento() {
+        return fechaInicio.plusMonths(cuotas);
+    }
     
-    public void mostrarInformacion () {
-            System.out.println("ID Prestamo: " + idPrestamo);
-            System.out.println("Cliente: " + cliente.getNombre());
-            System.out.println("Empleado: " + empleado.getNombre());
-            System.out.println("Monto: $" + monto);
-            System.out.println("Interes: " + tasaInteres + "%");
-            System.out.println("Cuotas: " + cuotas);
-            System.out.println("Total a pagar: $" + calcularTotal());
-            System.out.println("Cuota mensual: $" + calcularCuotaMensual());
-            System.out.println("Fecha: " + fechaInicio);
-            System.out.println("Estado: " + estado);
+    public Long calcularDiasMora() {
+        
+        LocalDate vencimiento = calcularFechaVencimiento();
+        
+        if(LocalDate.now().isAfter(vencimiento)) {
+            return ChronoUnit.DAYS.between(
+                    vencimiento, LocalDate.now()
+            );
+        }
+        
+        return 0L;
+    }
+    
+     public List<Cuotas> getListaCuotas() {
+        return listaCuotas;
+    }
+     
+    public void mostrarInformacion() {
+
+        System.out.println("ID Prestamo: " + idPrestamo);
+        System.out.println("Cliente: " + cliente.getNombre());
+        System.out.println("Empleado: " + empleado.getNombre());
+        System.out.println("Monto: $" + monto);
+        System.out.println("Interes mensual: " + tasaInteres + "%");
+        System.out.println("Cuotas: " + cuotas);
+        System.out.println("Total a pagar: $" + calcularTotal());
+        System.out.println("Cuota mensual aproximada: $"
+                + calcularCuotaMensual());
+        System.out.println("Fecha de inicio: " + fechaInicio);
+        System.out.println("Fecha de vencimiento: "
+                + calcularFechaVencimiento());
+        System.out.println("Estado: " + estado);
     }
     
     public int getIdPrestamo() {

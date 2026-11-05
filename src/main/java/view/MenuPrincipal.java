@@ -43,8 +43,11 @@ public class MenuPrincipal {
             System.out.println("4. Listar clientes");
             System.out.println("5. Registrar prestamo");
             System.out.println("6. Listar prestamos");
-            System.out.println("7. Registrar pago");
-            System.out.println("8. Listar pagos");
+            System.out.println("7. Consultar prestamos en mora");
+            System.out.println("8. Consultar cuotas de un prestamo");
+            System.out.println("9. Consultar cuotas vencidas");
+            System.out.println("10. Registrar pago");
+            System.out.println("11. Listar pagos");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
 
@@ -76,12 +79,27 @@ public class MenuPrincipal {
                     case 6:
                         listarPrestamos();
                         break;
-                        
-                    case 7:
-                        registrarPago();
+                    
+                    case 7: 
+                        prestamosController.mostrarPrestamosEnMora(pagosController);
                         break;
                         
                     case 8:
+                        System.out.print("Ingrese el ID del prestamo: ");
+                        int idPrestamo = teclado.nextInt();
+
+                        pagosController.mostrarCuotas(idPrestamo);
+                        break;
+
+                    case 9:
+                        pagosController.mostrarCuotasVencidas();
+                        break;
+                        
+                    case 10:
+                        registrarPago();
+                        break;
+                        
+                    case 11:
                         listarPagos();
                         break;
 

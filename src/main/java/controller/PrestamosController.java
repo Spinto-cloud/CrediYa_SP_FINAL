@@ -49,6 +49,7 @@ public class PrestamosController {
         
         if (monto <= 0 || interes < 0 || cuotas <= 0) {
             System.out.println("Los datos del prestamo son invalidos");
+            return;
         }
         
         int id = prestamos.size() + 1;
@@ -60,7 +61,7 @@ public class PrestamosController {
                 monto,
                 interes, 
                 cuotas, 
-                LocalDate.now()
+                LocalDate.now().minusMonths(3)
         );
         
         prestamos.add(nuevoPrestamo);
@@ -70,5 +71,9 @@ public class PrestamosController {
     
     public List<Prestamos> listarPrestamos() {
         return new ArrayList<>(prestamos);
+    }
+    
+    public void mostrarPrestamosEnMora(PagosController pagosController) {
+        pagosController.mostrarCuotasVencidas();     
     }
 }

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 
 import model.Pagos;
 import model.Prestamos;
+import model.Cuotas;
 
 public class PagosController {
     
@@ -22,6 +23,7 @@ public class PagosController {
         Prestamos prestamoEncontrado = null;
         
         for (Prestamos p : prestamosController.listarPrestamos()) {
+            
             if (p.getIdPrestamo() ==idPrestamo) {
                 prestamoEncontrado = p;
                 break;
@@ -44,6 +46,27 @@ public class PagosController {
             System.out.println("El pago supera el saldo pendiente");
             System.out.println("Saldo actual: $" + saldo);
             return;
+        }
+        
+        double restante = monto;
+        
+        //Se aplica el pago a las cuotas vencidas mas antiguas
+        for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
+
+            if (restante <= 0) {
+                break;
+            }
+
+            double saldoCuota = cuota.getSaldo();
+
+            if (saldoCuota > 0) {
+
+                double abono = Math.min(restante, saldoCuota);
+
+                cuota.registrarAbono(abono);
+
+                restante -= abono;
+            }
         }
         
         int id = pagos.size() +1;
@@ -70,6 +93,7 @@ public class PagosController {
     }   
     
     public double calcularTotalPagado(int idPrestamo) {
+        
         double total = 0;
         
         for (Pagos p : pagos) {
@@ -83,13 +107,80 @@ public class PagosController {
     public double calcularSaldo(int idPrestamo) {
         
         for (Prestamos p : prestamosController.listarPrestamos()) {
+            
             if (p.getIdPrestamo() == idPrestamo) {
-                return p.calcularTotal()
-                        - calcularTotalPagado(idPrestamo);
+                
+                double saldo = 0;
+
+                for (Cuotas cuota : p.getListaCuotas()) {
+                    saldo += cuota.getSaldo();
+                }
+
+                return saldo;
             }
         }
         
         return 0;
+    }
+    
+    public void mostrarCuotas(int idPrestamo) {
+
+        for (Prestamos p : prestamosController.listarPrestamos()) {
+
+            if (p.getIdPrestamo() == idPrestamo) {
+
+                System.out.println("\n----- CUOTAS DEL PRESTAMO -----");
+                System.out.println("Cliente: " + p.getCliente().getNombre());
+
+                for (Cuotas cuota : p.getListaCuotas()) {
+
+                    System.out.println("\nCuota: " + cuota.getNumero());
+                    System.out.println("Valor: $" + cuota.getValor());
+                    System.out.println("Monto Pagado: $" + cuota.getMontoPagado());
+                    System.out.println("Interes: $" + cuota.getInteres());
+                    System.out.println("Abono a capital: $" + cuota.getCapital());
+                    System.out.println("Saldo: $" + cuota.getSaldo());
+                    System.out.println("Vencimiento: " + cuota.getFechaVencimiento());
+                    System.out.println("Estado: " + cuota.getEstado());
+                    System.out.println("Dias de mora: " + cuota.calcularDiasMora());
+                }
+
+                return;
+            }
+        }
+
+        System.out.println("Prestamo no encontrado");
+    }
+    
+    
+    public void mostrarCuotasVencidas() {
+
+        System.out.println("\n----- CUOTAS VENCIDAS -----");
+
+        boolean encontrado = false;
+
+        for (Prestamos p : prestamosController.listarPrestamos()) {
+
+            for (Cuotas cuota : p.getListaCuotas()) {
+
+                if (cuota.getEstado().equals("Vencida")) {
+
+                    encontrado = true;
+
+                    System.out.println("Prestamo: " + p.getIdPrestamo());
+                    System.out.println("Cliente: " + p.getCliente().getNombre());
+                    System.out.println("Cuota: " + cuota.getNumero());
+                    System.out.println("Vencimiento: " + cuota.getFechaVencimiento());
+                    System.out.println("Dias de mora: " + cuota.calcularDiasMora());
+                    System.out.println("Saldo de la cuota: $" + cuota.getSaldo());
+                    System.out.println("------------------------------");
+                }
+            }
+        }
+
+        if (!encontrado) {
+            System.out.println("No hay cuotas vencidas");
+        }
     }
     
     public List<Pagos> listarPagos() {

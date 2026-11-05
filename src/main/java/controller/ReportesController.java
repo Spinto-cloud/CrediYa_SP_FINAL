@@ -23,7 +23,7 @@ public class ReportesController {
         System.out.println("\n--- PRESTAMOS ACTIVOS ---");
         
         List<Prestamos> activos = prestamosController.listarPrestamos()
-                .stream
+                .stream()
                 .filter(p -> p.getEstado().equalsIgnoreCase("pendiente"))
                 .toList();
         
