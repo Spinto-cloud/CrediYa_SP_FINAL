@@ -5,10 +5,12 @@ import java.util.Scanner;
 import controller.EmpleadoController;
 import controller.ClienteController;
 import controller.PrestamosController;
+import controller.PagosController;
 
 import model.Empleado;
 import model.Cliente;
 import model.Prestamos;
+import model.Pagos;
 
 public class MenuPrincipal {
 
@@ -22,6 +24,9 @@ public class MenuPrincipal {
     
     private PrestamosController prestamosController =
             new PrestamosController(clienteController, empleadoController);
+    
+    private PagosController pagosController =
+            new PagosController(prestamosController);
 
     public void mostrarMenu() {
 
@@ -38,6 +43,8 @@ public class MenuPrincipal {
             System.out.println("4. Listar clientes");
             System.out.println("5. Registrar prestamo");
             System.out.println("6. Listar prestamos");
+            System.out.println("7. Registrar pago");
+            System.out.println("8. Listar pagos");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
 
@@ -68,6 +75,14 @@ public class MenuPrincipal {
                         
                     case 6:
                         listarPrestamos();
+                        break;
+                        
+                    case 7:
+                        registrarPago();
+                        break;
+                        
+                    case 8:
+                        listarPagos();
                         break;
 
                     case 0:
@@ -197,6 +212,34 @@ public class MenuPrincipal {
         }
 
         for (Prestamos p : prestamosController.listarPrestamos()) {
+            p.mostrarInformacion();
+            System.out.println("----------------------------");
+        }
+    }
+    
+    private void registrarPago() {
+        
+        System.out.println("\n--- REGISTRAR PAGO ---");
+        
+        System.out.println("ID del prestamo: ");
+        int idPrestamo = Integer.parseInt(teclado.nextLine());
+        
+        System.out.println("Monto del pago: ");
+        double monto = Double.parseDouble(teclado.nextLine());
+        
+        pagosController.registrarPago(idPrestamo, monto);
+    }
+    
+    private void listarPagos() {
+
+        System.out.println("\n--- HISTORIAL DE PAGOS ---");
+
+        if (pagosController.listarPagos().isEmpty()) {
+            System.out.println("No hay pagos registrados.");
+            return;
+        }
+
+        for (Pagos p : pagosController.listarPagos()) {
             p.mostrarInformacion();
             System.out.println("----------------------------");
         }

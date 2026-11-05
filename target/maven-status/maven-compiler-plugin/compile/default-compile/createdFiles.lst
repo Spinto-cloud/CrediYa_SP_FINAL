@@ -1,4 +1,5 @@
 controller\ClienteController.class
+controller\PagosController.class
 model\Persona.class
 model\Prestamos.class
 model\Cliente.class
@@ -7,3 +8,4 @@ controller\PrestamosController.class
 controller\EmpleadoController.class
 main\Main.class
 model\Empleado.class
+model\Pagos.class
