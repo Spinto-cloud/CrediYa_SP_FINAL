@@ -42,7 +42,12 @@ public class PagosController {
         
         double saldo = calcularSaldo(idPrestamo);
         
-        if (monto>saldo) {
+        if (saldo <= 0.1) {
+            System.out.println("El prestamo ya esta cancelado en su totalidad");
+            return;
+        }
+        
+        if (monto > saldo + 0.1) {
             System.out.println("El pago supera el saldo pendiente");
             System.out.println("Saldo actual: $" + saldo);
             return;
@@ -53,13 +58,13 @@ public class PagosController {
         //Se aplica el pago a las cuotas vencidas mas antiguas
         for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
 
-            if (restante <= 0) {
+            if (restante <= 0.1) {
                 break;
             }
 
             double saldoCuota = cuota.getSaldo();
 
-            if (saldoCuota > 0) {
+            if (saldoCuota > 0.1) {
 
                 double abono = Math.min(restante, saldoCuota);
 
@@ -84,9 +89,9 @@ public class PagosController {
         
         double nuevoSaldo = calcularSaldo(idPrestamo);
         
-        System.out.println("Saldo pendiente: $" + nuevoSaldo);
+        System.out.println("Saldo pendiente: $" + Math.round (nuevoSaldo));
         
-        if (nuevoSaldo == 0) {
+        if (nuevoSaldo <= 0.1) {
             prestamoEncontrado.setEstado("Pagado");
             System.out.println("Prestamo cancelado en su totalidad");
         }
@@ -139,7 +144,8 @@ public class PagosController {
                     System.out.println("Monto Pagado: $" + cuota.getMontoPagado());
                     System.out.println("Interes: $" + cuota.getInteres());
                     System.out.println("Abono a capital: $" + cuota.getCapital());
-                    System.out.println("Saldo: $" + cuota.getSaldo());
+                    System.out.println("Saldo adeudado: $" 
+                            + p.calcularSaldoCapital(cuota.getNumero()));
                     System.out.println("Vencimiento: " + cuota.getFechaVencimiento());
                     System.out.println("Estado: " + cuota.getEstado());
                     System.out.println("Dias de mora: " + cuota.calcularDiasMora());

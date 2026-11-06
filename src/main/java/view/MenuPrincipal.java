@@ -6,6 +6,7 @@ import controller.EmpleadoController;
 import controller.ClienteController;
 import controller.PrestamosController;
 import controller.PagosController;
+import controller.ReportesController;
 
 import model.Empleado;
 import model.Cliente;
@@ -27,6 +28,9 @@ public class MenuPrincipal {
     
     private PagosController pagosController =
             new PagosController(prestamosController);
+    
+    private ReportesController reportesController =
+        new ReportesController(prestamosController, pagosController);
 
     public void mostrarMenu() {
 
@@ -48,6 +52,10 @@ public class MenuPrincipal {
             System.out.println("9. Consultar cuotas vencidas");
             System.out.println("10. Registrar pago");
             System.out.println("11. Listar pagos");
+            System.out.println("12. Reporte de prestamos activos");
+            System.out.println("13. Reporte de prestamos pagados");
+            System.out.println("14. Reporte de clientes con deuda");
+            System.out.println("15. Reporte de prestamos vencidos");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
 
@@ -86,7 +94,7 @@ public class MenuPrincipal {
                         
                     case 8:
                         System.out.print("Ingrese el ID del prestamo: ");
-                        int idPrestamo = teclado.nextInt();
+                        int idPrestamo = Integer.parseInt(teclado.nextLine());
 
                         pagosController.mostrarCuotas(idPrestamo);
                         break;
@@ -101,6 +109,22 @@ public class MenuPrincipal {
                         
                     case 11:
                         listarPagos();
+                        break;
+                        
+                    case 12:
+                        reportesController.mostrarPrestamosActivos();
+                        break;
+
+                    case 13:
+                        reportesController.mostrarPrestamosPagados();
+                        break;
+
+                    case 14:
+                        reportesController.mostrarClientesConDeuda();
+                        break;
+
+                    case 15:
+                        reportesController.mostrarPrestamosVencidos();
                         break;
 
                     case 0:
@@ -200,24 +224,28 @@ public class MenuPrincipal {
         
         System.out.println("\n--- REGISTRAR PRESTAMO ---");
         
-        System.out.println("ID del cliente: ");
-        int idCliente = Integer.parseInt(teclado.nextLine());
+        try {
+            System.out.println("ID del cliente: ");
+            int idCliente = Integer.parseInt(teclado.nextLine());
         
-        System.out.println("ID del empleado: ");
-        int idEmpleado = Integer.parseInt(teclado.nextLine());
+            System.out.println("ID del empleado: ");
+            int idEmpleado = Integer.parseInt(teclado.nextLine());
         
-        System.out.println("Monto del prestamo: ");
-        double monto = Double.parseDouble(teclado.nextLine());
+            System.out.println("Monto del prestamo: ");
+            double monto = Double.parseDouble(teclado.nextLine());
         
-        System.out.println("Interes (%): ");
-        double interes = Double.parseDouble(teclado.nextLine());
+            System.out.println("Interes (%): ");
+            double interes = Double.parseDouble(teclado.nextLine());
         
-        System.out.println("Numero de cuotas: ");
-        int cuotas = Integer.parseInt(teclado.nextLine());
+            System.out.println("Numero de cuotas: ");
+            int cuotas = Integer.parseInt(teclado.nextLine());
         
-        prestamosController.registrarPrestamo(
+            prestamosController.registrarPrestamo(
                 idCliente, idEmpleado, monto, interes, cuotas
-        );
+            ); 
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Por favor ingrese valores numericos validos");
+        }
     }
     
     private void listarPrestamos() {
@@ -239,13 +267,17 @@ public class MenuPrincipal {
         
         System.out.println("\n--- REGISTRAR PAGO ---");
         
-        System.out.println("ID del prestamo: ");
-        int idPrestamo = Integer.parseInt(teclado.nextLine());
+        try {
+            System.out.println("ID del prestamo: ");
+            int idPrestamo = Integer.parseInt(teclado.nextLine());
         
-        System.out.println("Monto del pago: ");
-        double monto = Double.parseDouble(teclado.nextLine());
+            System.out.println("Monto del pago: ");
+            double monto = Double.parseDouble(teclado.nextLine());
         
-        pagosController.registrarPago(idPrestamo, monto);
+            pagosController.registrarPago(idPrestamo, monto); 
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Por favor ingrese valores numericos validos");
+        }  
     }
     
     private void listarPagos() {

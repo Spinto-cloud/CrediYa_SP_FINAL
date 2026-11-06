@@ -24,6 +24,17 @@ public class Cuotas {
     }
     
     public void registrarAbono(double monto) {
+        
+        if (monto <= 0) {
+            System.out.println("El abono debe ser mayor a 0");
+            return;
+        }
+        
+        if (monto > getSaldo()) {
+            System.out.println("El abono supera el saldo de la cuota");
+            return;
+        }
+        
         montoPagado += monto;
     }
     
@@ -33,7 +44,7 @@ public class Cuotas {
     
     public String getEstado() {
         
-        if (getSaldo() == 0) {
+        if (getSaldo() <= 0.1) {
             return "Pagada";
         }
         

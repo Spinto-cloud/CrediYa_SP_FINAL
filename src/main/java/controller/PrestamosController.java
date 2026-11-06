@@ -61,12 +61,13 @@ public class PrestamosController {
                 monto,
                 interes, 
                 cuotas, 
-                LocalDate.now().minusMonths(3)
+                LocalDate.now()
         );
         
         prestamos.add(nuevoPrestamo);
         
         System.out.println("Prestamo registrado correctamente");
+        System.out.println("ID del prestamo: " + id);
     }
     
     public List<Prestamos> listarPrestamos() {
@@ -74,6 +75,7 @@ public class PrestamosController {
     }
     
     public void mostrarPrestamosEnMora(PagosController pagosController) {
+        System.out.println("\n--- PRESTAMOS EN MORA ---");
         pagosController.mostrarCuotasVencidas();     
     }
 }

@@ -126,6 +126,26 @@ public class Prestamos {
         return 0L;
     }
     
+    public double calcularSaldoCapital (int numeroCuota) {
+        
+        double saldo = monto;
+        
+        for (Cuotas cuota : listaCuotas) {
+            
+            saldo -= cuota.getCapital();
+            
+            if (cuota.getNumero() == numeroCuota) {
+                
+                if (Math.abs(saldo) < 0.1) {
+                    return 0;
+                }
+                return Math.max(0, Math.round(saldo *100.0 / 100.0));
+            }
+        }
+        
+        return 0;
+    }
+    
      public List<Cuotas> getListaCuotas() {
         return listaCuotas;
     }

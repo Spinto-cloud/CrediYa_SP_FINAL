@@ -12,6 +12,16 @@ public class Pagos {
     public Pagos(int idPago, Prestamos prestamo,
             double monto, LocalDate fecha) {
         
+        if (prestamo == null) {
+            throw new IllegalArgumentException(
+            "El prestamo no puede ser nulo");
+        }
+        
+        if (monto <= 0) {
+            throw new IllegalArgumentException(
+            "El monto debe ser mayor a 0");
+        }
+        
         this.idPago = idPago;
         this.prestamo = prestamo;
         this.monto = monto;
