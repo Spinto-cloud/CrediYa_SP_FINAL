@@ -3,18 +3,21 @@ package controller;
 import java.util.List;
 
 import model.Prestamos;
+import model.Cuotas;
 
 public class ReportesController {
     
     private PrestamosController prestamosController;
-    private PagosController pagosController;
     
-    public ReportesController(
-            PrestamosController prestamosController,
-            PagosController pagosController) {
-        
+    public ReportesController(PrestamosController prestamosController) {
         this.prestamosController = prestamosController;
-        this.pagosController = pagosController;
+    }
+    
+    private double calcularSaldo(Prestamos prestamo) {
+        return prestamo.getListaCuotas()
+                .stream()
+                .mapToDouble(c -> c.getSaldo())
+                .sum();
     }
     
     public void mostrarPrestamosActivos() {
@@ -23,7 +26,7 @@ public class ReportesController {
         
         List<Prestamos> activos = prestamosController.listarPrestamos()
                 .stream()
-                .filter(p -> "pendiente".equalsIgnoreCase("pendiente"))
+                .filter(p -> calcularSaldo(p) > 0.1)
                 .toList();
         
         if (activos.isEmpty()) {
@@ -32,12 +35,12 @@ public class ReportesController {
         }
         
         activos.forEach(p -> {
-            System.out.println("Prestamo:" + p.getIdPrestamo());
             System.out.println("Cliente: " + p.getCliente().getNombre());
-            System.out.println("Saldo pendiente: $"
-                    + pagosController.calcularSaldo(p.getIdPrestamo()));
+            System.out.println("Saldo pendiente: $" + calcularSaldo(p));
             System.out.println("-------------------------------");
         });
+        
+        System.out.println("Total de prestamos vigentes: " + activos.size());
     }
     
     public void mostrarPrestamosPagados() {
@@ -46,8 +49,7 @@ public class ReportesController {
         
         List<Prestamos> pagados = prestamosController.listarPrestamos()
                 .stream()
-                .filter(p -> pagosController.calcularSaldo(
-                        p.getIdPrestamo()) <= 0.1)
+                .filter(p -> calcularSaldo(p) <= 0.1)
                 .toList();
         
         if (pagados.isEmpty()) {
@@ -56,11 +58,12 @@ public class ReportesController {
         }
         
         pagados.forEach(p -> {
-            System.out.println("Prestamo: " + p.getIdPrestamo());
             System.out.println("Cliente: " + p.getCliente().getNombre());
             System.out.println("Estado: Cancelado");
             System.out.println("-------------------------------");
         });
+        
+        System.out.println("Total de prestamos cancelados: " + pagados.size());
     }
     
     public void mostrarClientesConDeuda() {
@@ -69,22 +72,18 @@ public class ReportesController {
         
         List<Prestamos> deudores = prestamosController.listarPrestamos()
                 .stream()
-                .filter(p -> pagosController.calcularSaldo(
-                        p.getIdPrestamo()) > 0.1)
+                .filter(p -> calcularSaldo(p) > 0.1)
                 .toList();
         
         if (deudores.isEmpty()) {
-            System.out.println("No hay clientes con deuda");
+            System.out.println("No hay clientes con deudas pendientes");
             return;
         }
         
         deudores.forEach(p -> {
             System.out.println("Cliente: " + p.getCliente().getNombre());
-            System.out.println("Documento: "
-                    + p.getCliente().getDocumento());
-            System.out.println("Prestamo: " + p.getIdPrestamo());
-            System.out.println("Deuda: $" 
-                    + pagosController.calcularSaldo(p.getIdPrestamo()));
+            System.out.println("Documento: "+ p.getCliente().getDocumento());
+            System.out.println("Deuda: $" + calcularSaldo(p));
             System.out.println("------------------------------");
         });
     }
@@ -95,26 +94,63 @@ public class ReportesController {
 
         List<Prestamos> vencidos = prestamosController.listarPrestamos()
                 .stream()
-                .filter(p -> pagosController.calcularSaldo(
-                        p.getIdPrestamo()) > 0.1)
-                .filter(p -> p.calcularDiasMora() > 0)
+                .filter(p -> p.getListaCuotas()
+                        .stream()
+                        .anyMatch(c -> c.getSaldo() > 0.1
+                        && c.calcularDiasMora() > 0))
                 .toList();
 
         if (vencidos.isEmpty()) {
-            System.out.println("No hay prestamos vencidos");
+            System.out.println("No hay prestamos en mora");
             return;
         }
 
         vencidos.forEach(p -> {
-            System.out.println("Prestamo: " + p.getIdPrestamo());
+            
             System.out.println("Cliente: " + p.getCliente().getNombre());
-            System.out.println("Fecha de vencimiento: "
-                    + p.calcularFechaVencimiento());
-            System.out.println("Dias de mora: "
-                    + p.calcularDiasMora());
-            System.out.println("Saldo pendiente: $"
-                    + pagosController.calcularSaldo(p.getIdPrestamo()));
-            System.out.println("-------------------------------");
+            
+            double deudaVencida = p.getListaCuotas()
+                    .stream()
+                    .filter(c -> c.getSaldo() > 0.1
+                    && c.calcularDiasMora() > 0)
+                    .mapToDouble(c -> c.getSaldo())
+                    .sum();
+            
+            long cuotasVencidas = p.getListaCuotas()
+                    .stream()
+                    .filter(c -> c.getSaldo() > 0.1
+                    && c.calcularDiasMora() > 0)
+                    .mapToDouble(c -> c.getSaldo())
+                    .count();
+            
+            System.out.println("Cuotas en mora: " + cuotasVencidas);
+            System.out.println("Valor en mora: $" + deudaVencida);
+            System.out.println("------------------------------");             
         });
+        
+        System.out.println("Total de prestamos en mora: " + vencidos.size());
+    }
+    
+    public void mostrarResumenGeneral() {
+        
+        List<Prestamos> lista = prestamosController.listarPrestamos();
+        
+        long activos = lista.stream()
+                .filter(p -> calcularSaldo(p) > 0.1)
+                .count();
+        
+        long pagados = lista.stream()
+                .filter(p -> calcularSaldo(p) <= 0.1)
+                .count();
+        
+        double deudaTotal = lista.stream()
+                .mapToDouble(p -> calcularSaldo(p))
+                .sum();
+        
+        System.out.println("\n--- RESUMEN GENERAL ---");
+        System.out.println("Total de prestamos: " + lista.size());
+        System.out.println("Prestamos activos: " + activos);
+        System.out.println("Prestamos cancelados: " + pagados);
+        System.out.println("Deuda total al corte: " + deudaTotal);         
     }
 }

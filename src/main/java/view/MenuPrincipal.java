@@ -30,7 +30,7 @@ public class MenuPrincipal {
             new PagosController(prestamosController);
     
     private ReportesController reportesController =
-        new ReportesController(prestamosController, pagosController);
+        new ReportesController(prestamosController);
 
     public void mostrarMenu() {
 
@@ -55,7 +55,8 @@ public class MenuPrincipal {
             System.out.println("12. Reporte de prestamos activos");
             System.out.println("13. Reporte de prestamos pagados");
             System.out.println("14. Reporte de clientes con deuda");
-            System.out.println("15. Reporte de prestamos vencidos");
+            System.out.println("15. Reporte de prestamos en mora");
+            System.out.println("16. Resumen general");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
 
@@ -125,6 +126,10 @@ public class MenuPrincipal {
 
                     case 15:
                         reportesController.mostrarPrestamosVencidos();
+                        break;
+                        
+                    case 16:
+                        reportesController.mostrarResumenGeneral();
                         break;
 
                     case 0:

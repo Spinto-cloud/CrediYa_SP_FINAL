@@ -4,8 +4,10 @@ view\MenuPrincipal.class
 main\Main.class
 model\Empleado.class
 controller\ClienteController.class
+repository\ArchivoEmpleado.class
 model\Prestamos.class
 model\Cliente.class
+repository\ArchivoCliente.class
 controller\PrestamosController.class
 controller\EmpleadoController.class
 controller\ReportesController.class

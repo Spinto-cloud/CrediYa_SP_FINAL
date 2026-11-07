@@ -139,7 +139,7 @@ public class Prestamos {
                 if (Math.abs(saldo) < 0.1) {
                     return 0;
                 }
-                return Math.max(0, Math.round(saldo *100.0 / 100.0));
+                return Math.max(0, Math.round(saldo *100.0) / 100.0);
             }
         }
         
