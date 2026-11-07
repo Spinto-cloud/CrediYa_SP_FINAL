@@ -66,6 +66,12 @@ public class Cuotas {
         
         return 0L;
     }
+    
+    public void cargarMontoPagado(double montoPagado) {
+    if (montoPagado >= 0 && montoPagado <= valor) {
+        this.montoPagado = montoPagado;
+        }
+    }
 
     public int getNumero() {
         return numero;

@@ -2,6 +2,7 @@ controller\PagosController.class
 model\Persona.class
 view\MenuPrincipal.class
 main\Main.class
+repository\ArchivoPagos.class
 model\Empleado.class
 controller\ClienteController.class
 repository\ArchivoEmpleado.class
@@ -10,6 +11,7 @@ model\Cliente.class
 repository\ArchivoCliente.class
 controller\PrestamosController.class
 controller\EmpleadoController.class
+repository\ArchivoPrestamos.class
 controller\ReportesController.class
 model\Cuotas.class
 model\Pagos.class

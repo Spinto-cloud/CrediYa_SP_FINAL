@@ -8,6 +8,8 @@ import model.Prestamos;
 import model.Cliente;
 import model.Empleado;
 
+import repository.ArchivoPrestamos;
+
 public class PrestamosController {
     
     private ArrayList<Prestamos> prestamos = new ArrayList();
@@ -15,11 +17,20 @@ public class PrestamosController {
     private ClienteController clienteController;
     private EmpleadoController empleadoController;
     
+    private ArchivoPrestamos archivoPrestamo = new ArchivoPrestamos();
+    
     public PrestamosController(ClienteController clienteController,
             EmpleadoController empleadoController) {
         
         this.clienteController = clienteController;
         this.empleadoController = empleadoController;
+        
+        prestamos = archivoPrestamo.cargar(
+                clienteController.listarClientes(),
+                empleadoController.listarEmpleados()
+        );
+
+        System.out.println("Prestamos cargados: " + prestamos.size());
     }
     
     public void registrarPrestamo(int idCliente, int idEmpleado,
@@ -52,7 +63,16 @@ public class PrestamosController {
             return;
         }
         
-        int id = prestamos.size() + 1;
+        int id;
+        
+        if (prestamos.isEmpty()) {
+            id = 1;
+        } else {
+            id = prestamos.stream()
+                    .mapToInt(p -> p.getIdPrestamo())
+                    .max()
+                    .getAsInt() + 1;
+        }
         
         Prestamos nuevoPrestamo = new Prestamos(
                 id, 
@@ -66,6 +86,8 @@ public class PrestamosController {
         
         prestamos.add(nuevoPrestamo);
         
+        archivoPrestamo.guardar(prestamos);
+        
         System.out.println("Prestamo registrado correctamente");
         System.out.println("ID del prestamo: " + id);
     }
@@ -77,5 +99,9 @@ public class PrestamosController {
     public void mostrarPrestamosEnMora(PagosController pagosController) {
         System.out.println("\n--- PRESTAMOS EN MORA ---");
         pagosController.mostrarCuotasVencidas();     
+    }
+    
+    public void guardarCambios() {
+    archivoPrestamo.guardar(prestamos);
     }
 }

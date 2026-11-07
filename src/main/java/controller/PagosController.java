@@ -8,14 +8,26 @@ import model.Pagos;
 import model.Prestamos;
 import model.Cuotas;
 
+import repository.ArchivoPagos;
+
 public class PagosController {
     
-    private ArrayList<Pagos> pagos = new ArrayList();
+    private ArrayList<Pagos> pagos = new ArrayList<>();
     
     private PrestamosController prestamosController;
-    
+
+    private ArchivoPagos archivoPagos = new ArchivoPagos();
+
     public PagosController(PrestamosController prestamosController) {
+
         this.prestamosController = prestamosController;
+
+        // Recuperar historial de pagos
+        pagos = archivoPagos.cargar(
+                prestamosController.listarPrestamos()
+        );
+
+        System.out.println("Pagos cargados: " + pagos.size());
     }
     
     public void registrarPago(int idPrestamo, double monto) {
@@ -74,27 +86,39 @@ public class PagosController {
             }
         }
         
-        int id = pagos.size() +1;
-        
+        int id;
+
+        if (pagos.isEmpty()) {
+            id = 1;
+        } else {
+            id = pagos.stream()
+                    .mapToInt(p -> p.getIdPago())
+                    .max()
+                    .getAsInt() + 1;
+        }
+
         Pagos nuevoPago = new Pagos(
                 id,
                 prestamoEncontrado,
                 monto,
                 LocalDate.now()
         );
-        
+
         pagos.add(nuevoPago);
-        
-        System.out.println("Pago registrado correctamente");
-        
+
         double nuevoSaldo = calcularSaldo(idPrestamo);
-        
-        System.out.println("Saldo pendiente: $" + Math.round (nuevoSaldo));
-        
+
         if (nuevoSaldo <= 0.1) {
             prestamoEncontrado.setEstado("Pagado");
             System.out.println("Prestamo cancelado en su totalidad");
         }
+        
+        archivoPagos.guardar(pagos);
+        prestamosController.guardarCambios();
+
+        System.out.println("Pago registrado correctamente");
+        System.out.println("ID del pago: " + id);
+        System.out.println("Saldo pendiente: $" + Math.round(nuevoSaldo));
     }   
     
     public double calcularTotalPagado(int idPrestamo) {
@@ -157,7 +181,6 @@ public class PagosController {
 
         System.out.println("Prestamo no encontrado");
     }
-    
     
     public void mostrarCuotasVencidas() {
 
