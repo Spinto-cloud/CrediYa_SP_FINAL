@@ -8,75 +8,106 @@ import model.Pagos;
 import model.Prestamos;
 import model.Cuotas;
 
+import repository.PagosDAO;
+import repository.PagosRepository;
 import repository.ArchivoPagos;
 
 public class PagosController {
-    
+
     private ArrayList<Pagos> pagos = new ArrayList<>();
-    
+
     private PrestamosController prestamosController;
 
-    private ArchivoPagos archivoPagos = new ArchivoPagos();
+    // Dependemos de la interfaz, no de la implementación.
+    private final PagosDAO pagosRepository;
 
+    private ArchivoPagos archivoPagos =
+            new ArchivoPagos();
+
+    // Constructor predeterminado.
     public PagosController(PrestamosController prestamosController) {
+        this(prestamosController, new PagosRepository());
+    }
+
+    // Constructor con inyección de dependencias.
+    public PagosController(
+            PrestamosController prestamosController,
+            PagosDAO pagosRepository) {
 
         this.prestamosController = prestamosController;
+        this.pagosRepository = pagosRepository;
 
-        // Recuperar historial de pagos
-        pagos = archivoPagos.cargar(
+        // Cargar historial de pagos desde MySQL.
+        pagos = pagosRepository.listar(
                 prestamosController.listarPrestamos()
         );
 
-        System.out.println("Pagos cargados: " + pagos.size());
+        System.out.println(
+                "Pagos cargados desde MySQL: " + pagos.size()
+        );
     }
-    
+
+    // Registrar un pago.
     public void registrarPago(int idPrestamo, double monto) {
-        
+
         Prestamos prestamoEncontrado = null;
-        
+
         for (Prestamos p : prestamosController.listarPrestamos()) {
-            
-            if (p.getIdPrestamo() ==idPrestamo) {
+
+            if (p.getIdPrestamo() == idPrestamo) {
                 prestamoEncontrado = p;
                 break;
             }
         }
-        
+
         if (prestamoEncontrado == null) {
-            System.out.println("Prestamo no encontrado");
+            System.out.println("Prestamo no encontrado.");
             return;
         }
-        
-        if (monto <=0) {
-            System.out.println("El monto debe ser mayor a 0");
+
+        if (!Double.isFinite(monto) || monto <= 0) {
+            System.out.println("El monto debe ser mayor a 0.");
             return;
         }
-        
+
         double saldo = calcularSaldo(idPrestamo);
-        
+
         if (saldo <= 0.1) {
-            System.out.println("El prestamo ya esta cancelado en su totalidad");
+            System.out.println(
+                    "El prestamo ya esta cancelado en su totalidad."
+            );
             return;
         }
-        
+
         if (monto > saldo + 0.1) {
-            System.out.println("El pago supera el saldo pendiente");
+            System.out.println(
+                    "El pago supera el saldo pendiente."
+            );
             System.out.println("Saldo actual: $" + saldo);
             return;
         }
-        
+
+        // Guardar valores anteriores para poder revertir.
+        ArrayList<Double> abonosAnteriores = new ArrayList<>();
+
+        for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
+            abonosAnteriores.add(cuota.getMontoPagado());
+        }
+
+        String estadoAnterior = prestamoEncontrado.getEstado();
+
+        // Aplicar el pago a las cuotas pendientes.
         double restante = monto;
-        
-        //Se aplica el pago a las cuotas vencidas mas antiguas
+
         for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
 
-            if (restante <= 0.1) {
+            if (restante <= 0.001) {
                 break;
             }
 
             double saldoCuota = cuota.getSaldo();
 
-            if (saldoCuota > 0.1) {
+            if (saldoCuota > 0.001) {
 
                 double abono = Math.min(restante, saldoCuota);
 
@@ -85,60 +116,94 @@ public class PagosController {
                 restante -= abono;
             }
         }
-        
-        int id;
-
-        if (pagos.isEmpty()) {
-            id = 1;
-        } else {
-            id = pagos.stream()
-                    .mapToInt(p -> p.getIdPago())
-                    .max()
-                    .getAsInt() + 1;
-        }
-
-        Pagos nuevoPago = new Pagos(
-                id,
-                prestamoEncontrado,
-                monto,
-                LocalDate.now()
-        );
-
-        pagos.add(nuevoPago);
 
         double nuevoSaldo = calcularSaldo(idPrestamo);
 
         if (nuevoSaldo <= 0.1) {
             prestamoEncontrado.setEstado("Pagado");
-            System.out.println("Prestamo cancelado en su totalidad");
         }
-        
-        archivoPagos.guardar(pagos);
-        prestamosController.guardarCambios();
 
-        System.out.println("Pago registrado correctamente");
-        System.out.println("ID del pago: " + id);
-        System.out.println("Saldo pendiente: $" + Math.round(nuevoSaldo));
-    }   
-    
+        LocalDate fechaPago = LocalDate.now();
+
+        Pagos nuevoPago = new Pagos(
+                0,
+                prestamoEncontrado,
+                monto,
+                fechaPago
+        );
+
+        // Guardar pago, cuotas y estado en una transacción MySQL.
+        int idGenerado = pagosRepository.registrarPagoCompleto(
+                nuevoPago,
+                prestamoEncontrado.getListaCuotas(),
+                prestamoEncontrado.getEstado()
+        );
+
+        // Si falla MySQL, revertir cambios en memoria.
+        if (idGenerado == -1) {
+
+            for (int i = 0;
+                    i < prestamoEncontrado.getListaCuotas().size();
+                    i++) {
+
+                prestamoEncontrado.getListaCuotas()
+                        .get(i)
+                        .cargarMontoPagado(abonosAnteriores.get(i));
+            }
+
+            prestamoEncontrado.setEstado(estadoAnterior);
+
+            System.out.println("El pago no fue registrado.");
+            return;
+        }
+
+        Pagos pagoRegistrado = new Pagos(
+                idGenerado,
+                prestamoEncontrado,
+                monto,
+                fechaPago
+        );
+
+        pagos.add(pagoRegistrado);
+
+        archivoPagos.guardar(pagos);
+
+        prestamosController.sincronizarArchivo();
+
+        System.out.println("\nPago registrado correctamente.");
+        System.out.println("ID del pago: " + idGenerado);
+        System.out.println("Monto pagado: $" + monto);
+        System.out.println("Saldo pendiente: $" + nuevoSaldo);
+
+        if (nuevoSaldo <= 0.1) {
+            System.out.println(
+                    "Prestamo cancelado en su totalidad."
+            );
+        }
+    }
+
+    // Calcular total pagado de un préstamo.
     public double calcularTotalPagado(int idPrestamo) {
-        
+
         double total = 0;
-        
+
         for (Pagos p : pagos) {
+
             if (p.getPrestamo().getIdPrestamo() == idPrestamo) {
                 total += p.getMonto();
             }
         }
+
         return total;
     }
-    
+
+    // Calcular saldo pendiente de un préstamo.
     public double calcularSaldo(int idPrestamo) {
-        
+
         for (Prestamos p : prestamosController.listarPrestamos()) {
-            
+
             if (p.getIdPrestamo() == idPrestamo) {
-                
+
                 double saldo = 0;
 
                 for (Cuotas cuota : p.getListaCuotas()) {
@@ -148,18 +213,24 @@ public class PagosController {
                 return saldo;
             }
         }
-        
+
         return 0;
     }
-    
+
+    // Mostrar cuotas de un préstamo.
     public void mostrarCuotas(int idPrestamo) {
 
         for (Prestamos p : prestamosController.listarPrestamos()) {
 
             if (p.getIdPrestamo() == idPrestamo) {
 
-                System.out.println("\n----- CUOTAS DEL PRESTAMO -----");
-                System.out.println("Cliente: " + p.getCliente().getNombre());
+                System.out.println(
+                        "\n----- CUOTAS DEL PRESTAMO -----"
+                );
+
+                System.out.println(
+                        "Cliente: " + p.getCliente().getNombre()
+                );
 
                 for (Cuotas cuota : p.getListaCuotas()) {
 
@@ -168,20 +239,31 @@ public class PagosController {
                     System.out.println("Monto Pagado: $" + cuota.getMontoPagado());
                     System.out.println("Interes: $" + cuota.getInteres());
                     System.out.println("Abono a capital: $" + cuota.getCapital());
-                    System.out.println("Saldo adeudado: $" 
-                            + p.calcularSaldoCapital(cuota.getNumero()));
-                    System.out.println("Vencimiento: " + cuota.getFechaVencimiento());
+
+                    System.out.println(
+                            "Saldo adeudado: $"
+                            + p.calcularSaldoCapital(cuota.getNumero())
+                    );
+
+                    System.out.println(
+                            "Vencimiento: " + cuota.getFechaVencimiento()
+                    );
+
                     System.out.println("Estado: " + cuota.getEstado());
-                    System.out.println("Dias de mora: " + cuota.calcularDiasMora());
+
+                    System.out.println(
+                            "Dias de mora: " + cuota.calcularDiasMora()
+                    );
                 }
 
                 return;
             }
         }
 
-        System.out.println("Prestamo no encontrado");
+        System.out.println("Prestamo no encontrado.");
     }
-    
+
+    // Mostrar cuotas vencidas.
     public void mostrarCuotasVencidas() {
 
         System.out.println("\n----- CUOTAS VENCIDAS -----");
@@ -199,20 +281,32 @@ public class PagosController {
                     System.out.println("Prestamo: " + p.getIdPrestamo());
                     System.out.println("Cliente: " + p.getCliente().getNombre());
                     System.out.println("Cuota: " + cuota.getNumero());
-                    System.out.println("Vencimiento: " + cuota.getFechaVencimiento());
-                    System.out.println("Dias de mora: " + cuota.calcularDiasMora());
-                    System.out.println("Saldo de la cuota: $" + cuota.getSaldo());
+
+                    System.out.println(
+                            "Vencimiento: " + cuota.getFechaVencimiento()
+                    );
+
+                    System.out.println(
+                            "Dias de mora: " + cuota.calcularDiasMora()
+                    );
+
+                    System.out.println(
+                            "Saldo de la cuota: $" + cuota.getSaldo()
+                    );
+
                     System.out.println("------------------------------");
                 }
             }
         }
 
         if (!encontrado) {
-            System.out.println("No hay cuotas vencidas");
+            System.out.println("No hay cuotas vencidas.");
         }
     }
-    
+
+    // Consultar historial de pagos.
     public List<Pagos> listarPagos() {
         return new ArrayList<>(pagos);
     }
 }
+

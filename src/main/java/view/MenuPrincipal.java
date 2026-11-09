@@ -8,6 +8,8 @@ import controller.PrestamosController;
 import controller.PagosController;
 import controller.ReportesController;
 
+import factory.ControllerFactory;
+
 import model.Empleado;
 import model.Cliente;
 import model.Prestamos;
@@ -15,22 +17,36 @@ import model.Pagos;
 
 public class MenuPrincipal {
 
-    private Scanner teclado = new Scanner(System.in);
+    private final Scanner teclado = new Scanner(System.in);
 
-    private EmpleadoController empleadoController =
-            new EmpleadoController();
+    private final EmpleadoController empleadoController;
+    private final ClienteController clienteController;
+    private final PrestamosController prestamosController;
+    private final PagosController pagosController;
+    private final ReportesController reportesController;
 
-    private ClienteController clienteController =
-            new ClienteController();
-    
-    private PrestamosController prestamosController =
-            new PrestamosController(clienteController, empleadoController);
-    
-    private PagosController pagosController =
-            new PagosController(prestamosController);
-    
-    private ReportesController reportesController =
-        new ReportesController(prestamosController);
+    // Constructor: utiliza Factory para crear los controladores
+    public MenuPrincipal() {
+
+        ControllerFactory factory = new ControllerFactory();
+
+        empleadoController = factory.crearEmpleadoController();
+
+        clienteController = factory.crearClienteController();
+
+        prestamosController = factory.crearPrestamosController(
+                clienteController,
+                empleadoController
+        );
+
+        pagosController = factory.crearPagosController(
+                prestamosController
+        );
+
+        reportesController = factory.crearReportesController(
+                prestamosController
+        );
+    }
 
     public void mostrarMenu() {
 
@@ -80,19 +96,19 @@ public class MenuPrincipal {
                     case 4:
                         listarClientes();
                         break;
-                        
+
                     case 5:
                         registrarPrestamo();
                         break;
-                        
+
                     case 6:
                         listarPrestamos();
                         break;
-                    
-                    case 7: 
-                        prestamosController.mostrarPrestamosEnMora(pagosController);
+
+                    case 7:
+                        reportesController.mostrarPrestamosVencidos();
                         break;
-                        
+
                     case 8:
                         System.out.print("Ingrese el ID del prestamo: ");
                         int idPrestamo = Integer.parseInt(teclado.nextLine());
@@ -103,15 +119,15 @@ public class MenuPrincipal {
                     case 9:
                         pagosController.mostrarCuotasVencidas();
                         break;
-                        
+
                     case 10:
                         registrarPago();
                         break;
-                        
+
                     case 11:
                         listarPagos();
                         break;
-                        
+
                     case 12:
                         reportesController.mostrarPrestamosActivos();
                         break;
@@ -127,7 +143,7 @@ public class MenuPrincipal {
                     case 15:
                         reportesController.mostrarPrestamosVencidos();
                         break;
-                        
+
                     case 16:
                         reportesController.mostrarResumenGeneral();
                         break;
@@ -224,35 +240,38 @@ public class MenuPrincipal {
             }
         }
     }
-    
+
     private void registrarPrestamo() {
-        
+
         System.out.println("\n--- REGISTRAR PRESTAMO ---");
-        
+
         try {
             System.out.println("ID del cliente: ");
             int idCliente = Integer.parseInt(teclado.nextLine());
-        
+
             System.out.println("ID del empleado: ");
             int idEmpleado = Integer.parseInt(teclado.nextLine());
-        
+
             System.out.println("Monto del prestamo: ");
             double monto = Double.parseDouble(teclado.nextLine());
-        
+
             System.out.println("Interes (%): ");
             double interes = Double.parseDouble(teclado.nextLine());
-        
+
             System.out.println("Numero de cuotas: ");
             int cuotas = Integer.parseInt(teclado.nextLine());
-        
+
             prestamosController.registrarPrestamo(
-                idCliente, idEmpleado, monto, interes, cuotas
-            ); 
+                    idCliente, idEmpleado, monto, interes, cuotas
+            );
+
         } catch (NumberFormatException e) {
-            System.out.println("Error: Por favor ingrese valores numericos validos");
+            System.out.println(
+                    "Error: Por favor ingrese valores numericos validos"
+            );
         }
     }
-    
+
     private void listarPrestamos() {
 
         System.out.println("\n--- LISTA DE PRESTAMOS ---");
@@ -267,24 +286,27 @@ public class MenuPrincipal {
             System.out.println("----------------------------");
         }
     }
-    
+
     private void registrarPago() {
-        
+
         System.out.println("\n--- REGISTRAR PAGO ---");
-        
+
         try {
             System.out.println("ID del prestamo: ");
             int idPrestamo = Integer.parseInt(teclado.nextLine());
-        
+
             System.out.println("Monto del pago: ");
             double monto = Double.parseDouble(teclado.nextLine());
-        
-            pagosController.registrarPago(idPrestamo, monto); 
+
+            pagosController.registrarPago(idPrestamo, monto);
+
         } catch (NumberFormatException e) {
-            System.out.println("Error: Por favor ingrese valores numericos validos");
-        }  
+            System.out.println(
+                    "Error: Por favor ingrese valores numericos validos"
+            );
+        }
     }
-    
+
     private void listarPagos() {
 
         System.out.println("\n--- HISTORIAL DE PAGOS ---");
@@ -300,5 +322,3 @@ public class MenuPrincipal {
         }
     }
 }
-        
-    

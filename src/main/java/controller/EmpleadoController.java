@@ -5,24 +5,75 @@ import java.util.List;
 
 import model.Empleado;
 
+import repository.EmpleadoDAO;
+import repository.EmpleadoRepository;
 import repository.ArchivoEmpleado;
-
 
 public class EmpleadoController {
 
     private ArrayList<Empleado> empleados = new ArrayList<>();
-    
-    private ArchivoEmpleado archivoEmpleado = new ArchivoEmpleado();
-    
-      public EmpleadoController() {
-        empleados = archivoEmpleado.cargar();
 
-        System.out.println("Empleados cargados: " + empleados.size());
+    // Dependemos de la interfaz, no de la implementación
+    private final EmpleadoDAO empleadoRepository;
+
+    private final ArchivoEmpleado archivoEmpleado =
+            new ArchivoEmpleado();
+
+    public EmpleadoController() {
+        this(new EmpleadoRepository());
     }
 
-    public void registrarEmpleado(String nombre, String documento,
-            String correo, String rol, double salario) {
+    // Constructor que permite inyectar otra implementación
+    public EmpleadoController(EmpleadoDAO empleadoRepository) {
 
+        this.empleadoRepository = empleadoRepository;
+
+        // Cargar empleados desde MySQL
+        empleados = new ArrayList<>(
+                empleadoRepository.listar()
+        );
+
+        // Sincronizar archivo TXT con MySQL
+        archivoEmpleado.guardar(empleados);
+
+        System.out.println(
+                "Empleados cargados desde MySQL: "
+                + empleados.size()
+        );
+    }
+
+    public void registrarEmpleado(
+            String nombre,
+            String documento,
+            String correo,
+            String rol,
+            double salario) {
+
+        if (nombre == null || nombre.trim().isEmpty()
+                || documento == null || documento.trim().isEmpty()
+                || correo == null || correo.trim().isEmpty()
+                || rol == null || rol.trim().isEmpty()
+                || salario <= 0) {
+
+            System.out.println(
+                    "Los datos del empleado son inválidos."
+            );
+            return;
+        }
+
+        // Validar documento duplicado
+        boolean documentoExiste = empleados.stream()
+                .anyMatch(e ->
+                        e.getDocumento().equals(documento));
+
+        if (documentoExiste) {
+            System.out.println(
+                    "Ya existe un empleado con ese documento."
+            );
+            return;
+        }
+
+        // Generar identificador
         int id;
 
         if (empleados.isEmpty()) {
@@ -35,15 +86,35 @@ public class EmpleadoController {
         }
 
         Empleado empleado = new Empleado(
-                id, nombre, documento, correo, rol, salario
+                id,
+                nombre,
+                documento,
+                correo,
+                rol,
+                salario
         );
 
-        empleados.add(empleado);
-        
-        archivoEmpleado.guardar(empleados);
+        // Guardar primero en MySQL
+        boolean guardado = empleadoRepository.guardar(empleado);
 
-        System.out.println("\nEmpleado registrado correctamente.");
-        System.out.println("Total de empleados: " + empleados.size());
+        if (guardado) {
+
+            empleados.add(empleado);
+
+            // Actualizar archivo TXT
+            archivoEmpleado.guardar(empleados);
+
+            System.out.println(
+                    "Empleado registrado correctamente."
+            );
+
+            System.out.println("ID del empleado: " + id);
+
+        } else {
+            System.out.println(
+                    "No fue posible registrar el empleado en MySQL."
+            );
+        }
     }
 
     public List<Empleado> listarEmpleados() {

@@ -3,6 +3,9 @@ C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\co
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\controller\PagosController.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\controller\PrestamosController.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\controller\ReportesController.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\database\Conexion.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\database\PruebaConexion.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\factory\ControllerFactory.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\main\Main.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\model\Cliente.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\model\Cuotas.java
@@ -14,4 +17,14 @@ C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\re
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\ArchivoEmpleado.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\ArchivoPagos.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\ArchivoPrestamos.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\ClienteDAO.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\ClienteRepository.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\CuotasDAO.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\CuotasRepository.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\EmpleadoDAO.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\EmpleadoRepository.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\PagosDAO.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\PagosRepository.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\PrestamosDAO.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\repository\PrestamosRepository.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\view\MenuPrincipal.java

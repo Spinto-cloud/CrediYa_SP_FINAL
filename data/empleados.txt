@@ -1,1 +1,3 @@
-1|Sergio Pinto|1098648485|sp@gmail.com|Adminsitrador|3000000.0
+1|Sergio Pinto|1098648485|sp@gmail.com|Administrador|3000000.0
+2|Juanita Pinto|1097919969|jp@gmail.com|Auxiliar de cartera|2000000.0
+3|Pedro Perez|56492393|pp@gmail.com|Auxiliar operativo|2000000.0
