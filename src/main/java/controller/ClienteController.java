@@ -118,4 +118,64 @@ public class ClienteController {
     public List<Cliente> listarClientes() {
         return new ArrayList<>(clientes);
     }
+    
+    public void actualizarCliente(
+        int id,
+        String nombre,
+        String documento,
+        String correo,
+        String telefono) {
+
+        if (nombre == null || nombre.trim().isEmpty()
+                || documento == null || documento.trim().isEmpty()
+                || correo == null || correo.trim().isEmpty()
+                || telefono == null || telefono.trim().isEmpty()) {
+
+            System.out.println("Los datos del cliente son inválidos.");
+            return;
+        }
+
+        Cliente clienteActualizado = new Cliente(
+                id,
+                nombre,
+                documento,
+                correo,
+                telefono
+        );
+
+        boolean actualizado = clienteRepository.actualizar(
+                clienteActualizado
+        );
+
+        if (actualizado) {
+
+            clientes = new ArrayList<>(clienteRepository.listar());
+
+            archivoCliente.guardar(clientes);
+
+            System.out.println("Cliente actualizado correctamente.");
+
+        } else {
+
+            System.out.println("No fue posible actualizar el cliente.");
+        }
+    }
+    
+    public void eliminarCliente(int id) {
+
+        boolean eliminado = clienteRepository.eliminar(id);
+
+        if (eliminado) {
+
+            clientes = new ArrayList<>(clienteRepository.listar());
+
+            archivoCliente.guardar(clientes);
+
+            System.out.println("Cliente eliminado correctamente.");
+
+        } else {
+
+            System.out.println("No fue posible eliminar el cliente.");
+        }
+    }
 }

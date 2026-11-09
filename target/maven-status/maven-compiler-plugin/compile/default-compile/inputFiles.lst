@@ -5,6 +5,10 @@ C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\co
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\controller\ReportesController.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\database\Conexion.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\database\PruebaConexion.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\exception\ClienteNoEncontradoException.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\exception\EmpleadoNoEncontradoException.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\exception\PagoInvalidoException.java
+C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\exception\PrestamoInvalidoException.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\factory\ControllerFactory.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\main\Main.java
 C:\Users\USUARIO\OneDrive\Documents\NetBeansProjects\CrediYa_SP\src\main\java\model\Cliente.java

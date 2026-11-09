@@ -12,6 +12,8 @@ import repository.PagosDAO;
 import repository.PagosRepository;
 import repository.ArchivoPagos;
 
+import exception.PagoInvalidoException;
+
 public class PagosController {
 
     private ArrayList<Pagos> pagos = new ArrayList<>();
@@ -46,141 +48,158 @@ public class PagosController {
                 "Pagos cargados desde MySQL: " + pagos.size()
         );
     }
+    
+    private void validarPago(
+        int idPrestamo,
+        double monto) throws PagoInvalidoException {
+
+    Prestamos prestamo = prestamosController.listarPrestamos()
+            .stream()
+            .filter(p -> p.getIdPrestamo() == idPrestamo)
+            .findFirst()
+            .orElseThrow(() ->
+                    new PagoInvalidoException(
+                            "El prestamo no existe."
+                    )
+            );
+
+    if (!Double.isFinite(monto) || monto <= 0) {
+        throw new PagoInvalidoException(
+                "El monto del pago debe ser mayor que cero."
+        );
+    }
+
+    double saldo = calcularSaldo(idPrestamo);
+
+    if (saldo <= 0.1) {
+        throw new PagoInvalidoException(
+                "El prestamo ya esta cancelado en su totalidad."
+        );
+    }
+
+    if (monto > saldo + 0.1) {
+        throw new PagoInvalidoException(
+                "El pago supera el saldo pendiente. Saldo actual: $" + saldo
+        );
+    }
+}
 
     // Registrar un pago.
     public void registrarPago(int idPrestamo, double monto) {
 
-        Prestamos prestamoEncontrado = null;
+        try {
 
-        for (Prestamos p : prestamosController.listarPrestamos()) {
+            // Validar el préstamo y el monto del pago.
+            validarPago(idPrestamo, monto);
 
-            if (p.getIdPrestamo() == idPrestamo) {
-                prestamoEncontrado = p;
-                break;
+            // Buscar el préstamo.
+            Prestamos prestamoEncontrado = prestamosController
+                    .listarPrestamos()
+                    .stream()
+                    .filter(p -> p.getIdPrestamo() == idPrestamo)
+                    .findFirst()
+                    .orElseThrow();
+
+            double saldo = calcularSaldo(idPrestamo);
+
+            // Guardar valores anteriores para poder revertir.
+            ArrayList<Double> abonosAnteriores = new ArrayList<>();
+
+            for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
+                abonosAnteriores.add(cuota.getMontoPagado());
             }
-        }
 
-        if (prestamoEncontrado == null) {
-            System.out.println("Prestamo no encontrado.");
-            return;
-        }
+            String estadoAnterior = prestamoEncontrado.getEstado();
 
-        if (!Double.isFinite(monto) || monto <= 0) {
-            System.out.println("El monto debe ser mayor a 0.");
-            return;
-        }
+            // Aplicar el pago a las cuotas pendientes.
+            double restante = monto;
 
-        double saldo = calcularSaldo(idPrestamo);
+            for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
 
-        if (saldo <= 0.1) {
-            System.out.println(
-                    "El prestamo ya esta cancelado en su totalidad."
+                if (restante <= 0.001) {
+                    break;
+                }
+
+                double saldoCuota = cuota.getSaldo();
+
+                if (saldoCuota > 0.001) {
+                    double abono = Math.min(restante, saldoCuota);
+                    cuota.registrarAbono(abono);
+                    restante -= abono;
+                }
+            }
+
+            double nuevoSaldo = calcularSaldo(idPrestamo);
+
+            if (nuevoSaldo <= 0.1) {
+                prestamoEncontrado.setEstado("Pagado");
+            }
+
+            LocalDate fechaPago = LocalDate.now();
+
+            Pagos nuevoPago = new Pagos(
+                    0,
+                    prestamoEncontrado,
+                    monto,
+                    fechaPago
             );
-            return;
-        }
 
-        if (monto > saldo + 0.1) {
-            System.out.println(
-                    "El pago supera el saldo pendiente."
+            // Guardar pago, cuotas y estado en una transacción MySQL.
+            int idGenerado = pagosRepository.registrarPagoCompleto(
+                    nuevoPago,
+                    prestamoEncontrado.getListaCuotas(),
+                    prestamoEncontrado.getEstado()
             );
-            System.out.println("Saldo actual: $" + saldo);
-            return;
-        }
 
-        // Guardar valores anteriores para poder revertir.
-        ArrayList<Double> abonosAnteriores = new ArrayList<>();
+            // Si falla MySQL, revertir cambios en memoria.
+            if (idGenerado == -1) {
 
-        for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
-            abonosAnteriores.add(cuota.getMontoPagado());
-        }
+                for (int i = 0;
+                        i < prestamoEncontrado.getListaCuotas().size();
+                        i++) {
 
-        String estadoAnterior = prestamoEncontrado.getEstado();
+                    prestamoEncontrado.getListaCuotas()
+                            .get(i)
+                            .cargarMontoPagado(abonosAnteriores.get(i));
+                }
 
-        // Aplicar el pago a las cuotas pendientes.
-        double restante = monto;
+                prestamoEncontrado.setEstado(estadoAnterior);
 
-        for (Cuotas cuota : prestamoEncontrado.getListaCuotas()) {
-
-            if (restante <= 0.001) {
-                break;
+                System.out.println("El pago no fue registrado.");
+                return;
             }
 
-            double saldoCuota = cuota.getSaldo();
+            Pagos pagoRegistrado = new Pagos(
+                    idGenerado,
+                    prestamoEncontrado,
+                    monto,
+                    fechaPago
+            );
 
-            if (saldoCuota > 0.001) {
+            pagos.add(pagoRegistrado);
 
-                double abono = Math.min(restante, saldoCuota);
+            archivoPagos.guardar(pagos);
+            prestamosController.sincronizarArchivo();
 
-                cuota.registrarAbono(abono);
+            System.out.println("\nPago registrado correctamente.");
+            System.out.println("ID del pago: " + idGenerado);
+            System.out.println("Monto pagado: $" + monto);
+            System.out.println("Saldo pendiente: $" + nuevoSaldo);
 
-                restante -= abono;
-            }
-        }
-
-        double nuevoSaldo = calcularSaldo(idPrestamo);
-
-        if (nuevoSaldo <= 0.1) {
-            prestamoEncontrado.setEstado("Pagado");
-        }
-
-        LocalDate fechaPago = LocalDate.now();
-
-        Pagos nuevoPago = new Pagos(
-                0,
-                prestamoEncontrado,
-                monto,
-                fechaPago
-        );
-
-        // Guardar pago, cuotas y estado en una transacción MySQL.
-        int idGenerado = pagosRepository.registrarPagoCompleto(
-                nuevoPago,
-                prestamoEncontrado.getListaCuotas(),
-                prestamoEncontrado.getEstado()
-        );
-
-        // Si falla MySQL, revertir cambios en memoria.
-        if (idGenerado == -1) {
-
-            for (int i = 0;
-                    i < prestamoEncontrado.getListaCuotas().size();
-                    i++) {
-
-                prestamoEncontrado.getListaCuotas()
-                        .get(i)
-                        .cargarMontoPagado(abonosAnteriores.get(i));
+            if (nuevoSaldo <= 0.1) {
+                System.out.println(
+                        "Prestamo cancelado en su totalidad."
+                );
             }
 
-            prestamoEncontrado.setEstado(estadoAnterior);
+        } catch (PagoInvalidoException e) {
 
-            System.out.println("El pago no fue registrado.");
-            return;
-        }
-
-        Pagos pagoRegistrado = new Pagos(
-                idGenerado,
-                prestamoEncontrado,
-                monto,
-                fechaPago
-        );
-
-        pagos.add(pagoRegistrado);
-
-        archivoPagos.guardar(pagos);
-
-        prestamosController.sincronizarArchivo();
-
-        System.out.println("\nPago registrado correctamente.");
-        System.out.println("ID del pago: " + idGenerado);
-        System.out.println("Monto pagado: $" + monto);
-        System.out.println("Saldo pendiente: $" + nuevoSaldo);
-
-        if (nuevoSaldo <= 0.1) {
             System.out.println(
-                    "Prestamo cancelado en su totalidad."
+                    "Error al registrar pago: " + e.getMessage()
             );
         }
     }
+
 
     // Calcular total pagado de un préstamo.
     public double calcularTotalPagado(int idPrestamo) {

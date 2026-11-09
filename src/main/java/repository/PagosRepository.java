@@ -20,8 +20,7 @@ public class PagosRepository implements PagosDAO {
                 + "(id_pago, id_prestamo, monto, fecha) "
                 + "VALUES (?, ?, ?, ?)";
 
-        try (Connection conexion = Conexion.conectar()) {
-
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
             if (conexion == null) {
                 return false;
             }
@@ -53,7 +52,7 @@ public class PagosRepository implements PagosDAO {
 
         String sql = "SELECT * FROM pagos ORDER BY id_pago";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return lista;
@@ -112,7 +111,7 @@ public class PagosRepository implements PagosDAO {
         String sqlPrestamo = "UPDATE prestamos "
                 + "SET estado = ? WHERE id_prestamo = ?";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return -1;

@@ -8,4 +8,8 @@ public interface ClienteDAO {
     int guardar(Cliente cliente);
 
     List<Cliente> listar();
+    
+    boolean actualizar(Cliente cliente);
+    
+    boolean eliminar(int id);
 }

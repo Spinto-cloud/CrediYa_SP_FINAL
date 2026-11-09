@@ -21,7 +21,7 @@ public class CuotasRepository implements CuotasDAO {
                 + "capital, monto_pagado, fecha_vencimiento) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return false;
@@ -102,7 +102,7 @@ public class CuotasRepository implements CuotasDAO {
                 + "WHERE id_prestamo = ? "
                 + "ORDER BY numero_cuota";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return lista;

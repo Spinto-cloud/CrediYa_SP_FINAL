@@ -11,27 +11,45 @@ public class Conexion {
 
     private static final String USUARIO = "root";
 
-    private static final String PASSWORD = "Spinto88";
+    private static final Conexion instancia = new Conexion();
 
-    public static Connection conectar() {
+    // Constructor privado
+    private Conexion() {
+    }
 
-        Connection conexion = null;
+    // Única instancia de Conexion
+    public static Conexion getInstancia() {
+        return instancia;
+    }
+
+    // Crea una conexión para cada operación
+    public Connection conectar() {
+
+        String password = System.getenv("CREDIYA_DB_PASSWORD");
+
+        if (password == null || password.isBlank()) {
+            System.out.println(
+                    "No se encontró la variable CREDIYA_DB_PASSWORD."
+            );
+            return null;
+        }
 
         try {
-            conexion = DriverManager.getConnection(
+            Connection conexion = DriverManager.getConnection(
                     URL,
                     USUARIO,
-                    PASSWORD
+                    password
             );
 
             System.out.println("Conexion con MySQL exitosa.");
 
-        } catch (SQLException e) {
+            return conexion;
 
+        } catch (SQLException e) {
             System.out.println("Error al conectar con MySQL:");
             System.out.println(e.getMessage());
-        }
 
-        return conexion;
+            return null;
+        }
     }
 }

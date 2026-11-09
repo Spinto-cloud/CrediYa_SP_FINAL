@@ -15,6 +15,10 @@ import repository.CuotasDAO;
 import repository.CuotasRepository;
 import repository.ArchivoPrestamos;
 
+import exception.PrestamoInvalidoException;
+import exception.ClienteNoEncontradoException;
+import exception.EmpleadoNoEncontradoException;
+
 public class PrestamosController {
 
     private ArrayList<Prestamos> prestamos = new ArrayList<>();
@@ -95,112 +99,141 @@ public class PrestamosController {
             double interes,
             int cuotas) {
 
-        Cliente cliente = null;
-        Empleado empleado = null;
+        try {
 
-        // Buscar cliente
-        for (Cliente c : clienteController.listarClientes()) {
+            // Buscar cliente y empleado
+            Cliente cliente = buscarCliente(idCliente);
+            Empleado empleado = buscarEmpleado(idEmpleado);
 
-            if (c.getId() == idCliente) {
-                cliente = c;
-                break;
-            }
-        }
+            // Validar los datos del préstamo
+            validarPrestamo(monto, interes, cuotas);
 
-        // Buscar empleado
-        for (Empleado e : empleadoController.listarEmpleados()) {
+            // Generar identificador
+            int id = prestamos.isEmpty()
+                    ? 1
+                    : prestamos.stream()
+                            .mapToInt(p -> p.getIdPrestamo())
+                            .max()
+                            .getAsInt() + 1;
 
-            if (e.getId() == idEmpleado) {
-                empleado = e;
-                break;
-            }
-        }
-
-        if (cliente == null || empleado == null) {
-            System.out.println(
-                    "Cliente o empleado no encontrado."
+            // Crear préstamo y generar sus cuotas
+            Prestamos nuevoPrestamo = new Prestamos(
+                    id,
+                    cliente,
+                    empleado,
+                    monto,
+                    interes,
+                    cuotas,
+                    LocalDate.now()
             );
-            return;
-        }
 
-        // Validar datos
-        if (!Double.isFinite(monto)
-                || !Double.isFinite(interes)
-                || monto <= 0
-                || interes < 0
-                || cuotas <= 0) {
+            // Guardar préstamo en MySQL
+            boolean guardado =
+                    prestamoRepository.guardar(nuevoPrestamo);
 
-            System.out.println(
-                    "Los datos del prestamo son invalidos."
-            );
-            return;
-        }
-
-        // Generar identificador
-        int id = prestamos.isEmpty()
-                ? 1
-                : prestamos.stream()
-                        .mapToInt(p -> p.getIdPrestamo())
-                        .max()
-                        .getAsInt() + 1;
-
-        // Crear préstamo y generar sus cuotas
-        Prestamos nuevoPrestamo = new Prestamos(
-                id,
-                cliente,
-                empleado,
-                monto,
-                interes,
-                cuotas,
-                LocalDate.now()
-        );
-
-        // Guardar préstamo en MySQL
-        boolean guardado =
-                prestamoRepository.guardar(nuevoPrestamo);
-
-        if (!guardado) {
-            System.out.println(
-                    "No fue posible registrar el prestamo."
-            );
-            return;
-        }
-
-        // Guardar cuotas en MySQL
-        boolean cuotasGuardadas =
-                cuotasRepository.guardarTodas(
-                        id,
-                        nuevoPrestamo.getListaCuotas()
+            if (!guardado) {
+                System.out.println(
+                        "No fue posible registrar el prestamo."
                 );
+                return;
+            }
 
-        if (!cuotasGuardadas) {
+            // Guardar cuotas en MySQL
+            boolean cuotasGuardadas =
+                    cuotasRepository.guardarTodas(
+                            id,
+                            nuevoPrestamo.getListaCuotas()
+                    );
+
+            if (!cuotasGuardadas) {
+                System.out.println(
+                        "No fue posible guardar las cuotas."
+                );
+                System.out.println(
+                        "El prestamo pudo quedar registrado sin cuotas."
+                );
+                return;
+            }
+
+            // Agregar préstamo a la lista
+            prestamos.add(nuevoPrestamo);
+
+            // Sincronizar archivos TXT
+            sincronizarArchivo();
+
             System.out.println(
-                    "No fue posible guardar las cuotas."
+                    "Prestamo registrado correctamente."
             );
+
             System.out.println(
-                    "El prestamo pudo quedar registrado sin cuotas."
+                    "ID del prestamo: " + id
             );
-            return;
+
+        } catch (ClienteNoEncontradoException
+                | EmpleadoNoEncontradoException
+                | PrestamoInvalidoException e) {
+
+            System.out.println(
+                    "Error al registrar prestamo: " + e.getMessage()
+            );
         }
-
-        // Agregar préstamo a la lista
-        prestamos.add(nuevoPrestamo);
-
-        // Sincronizar archivos TXT
-        sincronizarArchivo();
-
-        System.out.println(
-                "Prestamo registrado correctamente."
-        );
-
-        System.out.println(
-                "ID del prestamo: " + id
-        );
     }
 
     // Listar préstamos
     public List<Prestamos> listarPrestamos() {
         return new ArrayList<>(prestamos);
+    }
+    
+    private Cliente buscarCliente(int id)
+            throws ClienteNoEncontradoException {
+
+        return clienteController.listarClientes()
+                .stream()
+                .filter(c -> c.getId() == id)
+                .findFirst()
+                .orElseThrow(() ->
+                        new ClienteNoEncontradoException(
+                                "No existe un cliente con ID: " + id
+                        )
+                );
+    }
+    
+    private Empleado buscarEmpleado(int id)
+            throws EmpleadoNoEncontradoException {
+
+        return empleadoController.listarEmpleados()
+                .stream()
+                .filter(e -> e.getId() == id)
+                .findFirst()
+                .orElseThrow(() ->
+                        new EmpleadoNoEncontradoException(
+                                "No existe un empleado con ID: " + id
+                        )
+                );
+    }
+    
+        private void validarPrestamo(
+            double monto,
+            double interes,
+            int cuotas) throws PrestamoInvalidoException {
+
+        if (!Double.isFinite(monto) || monto <= 0) {
+            throw new PrestamoInvalidoException(
+                    "El monto del prestamo debe ser mayor que cero."
+            );
+        }
+
+        if (!Double.isFinite(interes) || interes < 0) {
+            throw new PrestamoInvalidoException(
+                    "El interes no puede ser negativo."
+            );
+        }
+
+        if (cuotas <= 0) {
+            throw new PrestamoInvalidoException(
+                    "El numero de cuotas debe ser mayor que cero."
+            );
+        }
     }
 
     // Mostrar préstamos en mora

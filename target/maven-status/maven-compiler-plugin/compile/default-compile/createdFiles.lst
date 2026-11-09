@@ -1,9 +1,11 @@
 controller\PagosController.class
 model\Persona.class
+exception\EmpleadoNoEncontradoException.class
 view\MenuPrincipal.class
 main\Main.class
 repository\ArchivoPagos.class
 model\Empleado.class
+exception\ClienteNoEncontradoException.class
 controller\ClienteController.class
 repository\PagosRepository.class
 repository\ClienteRepository.class
@@ -17,6 +19,8 @@ repository\CuotasDAO.class
 repository\EmpleadoDAO.class
 database\PruebaConexion.class
 model\Pagos.class
+exception\PagoInvalidoException.class
+exception\PrestamoInvalidoException.class
 repository\PrestamosDAO.class
 factory\ControllerFactory.class
 repository\CuotasRepository.class

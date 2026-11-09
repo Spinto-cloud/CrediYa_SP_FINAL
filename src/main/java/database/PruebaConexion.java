@@ -6,7 +6,7 @@ public class PruebaConexion {
 
     public static void main(String[] args) {
 
-        Connection conexion = Conexion.conectar();
+        Connection conexion = Conexion.getInstancia().conectar();
 
         if (conexion != null) {
             System.out.println("CrediYa esta conectado a MySQL.");

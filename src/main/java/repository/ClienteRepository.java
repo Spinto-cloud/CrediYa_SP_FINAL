@@ -18,7 +18,7 @@ public class ClienteRepository implements ClienteDAO {
                 + "(nombre, documento, correo, telefono) "
                 + "VALUES (?, ?, ?, ?)";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return -1;
@@ -68,7 +68,7 @@ public class ClienteRepository implements ClienteDAO {
 
         String sql = "SELECT * FROM clientes ORDER BY id_cliente";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return clientes;
@@ -100,5 +100,91 @@ public class ClienteRepository implements ClienteDAO {
 
         return clientes;
     }
-}
+    
+    @Override
+    public boolean actualizar(Cliente cliente) {
 
+        String sql = "UPDATE clientes SET "
+                + "nombre = ?, documento = ?, correo = ?, telefono = ? "
+                + "WHERE id_cliente = ?";
+
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
+
+            if (conexion == null) {
+                return false;
+            }
+
+            try (PreparedStatement consulta = conexion.prepareStatement(sql)) {
+
+                consulta.setString(1, cliente.getNombre());
+                consulta.setString(2, cliente.getDocumento());
+                consulta.setString(3, cliente.getCorreo());
+                consulta.setString(4, cliente.getTelefono());
+                consulta.setInt(5, cliente.getId());
+
+                return consulta.executeUpdate() > 0;
+            }
+
+        } catch (SQLException e) {
+
+            System.out.println("Error al actualizar cliente: "
+                    + e.getMessage());
+
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean eliminar(int id) {
+
+        String sqlVerificar =
+                "SELECT COUNT(*) FROM prestamos WHERE id_cliente = ?";
+
+        String sqlEliminar =
+                "DELETE FROM clientes WHERE id_cliente = ?";
+
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
+
+            if (conexion == null) {
+                return false;
+            }
+
+            // Verificar si tiene prestamos asociados
+            try (PreparedStatement consulta =
+                    conexion.prepareStatement(sqlVerificar)) {
+
+                consulta.setInt(1, id);
+
+                try (ResultSet resultado = consulta.executeQuery()) {
+
+                    if (resultado.next() && resultado.getInt(1) > 0) {
+
+                        System.out.println(
+                                "No se puede eliminar: el cliente tiene prestamos asociados."
+                        );
+
+                        return false;
+                    }
+                }
+            }
+
+            // Eliminar cliente si no tiene prestamos
+            try (PreparedStatement consulta =
+                    conexion.prepareStatement(sqlEliminar)) {
+
+                consulta.setInt(1, id);
+
+                int filasEliminadas = consulta.executeUpdate();
+
+                return filasEliminadas > 0;
+            }
+
+        } catch (SQLException e) {
+
+            System.out.println("Error al eliminar cliente: "
+                    + e.getMessage());
+
+            return false;
+        }
+    }
+}

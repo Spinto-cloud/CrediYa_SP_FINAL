@@ -73,6 +73,10 @@ public class MenuPrincipal {
             System.out.println("14. Reporte de clientes con deuda");
             System.out.println("15. Reporte de prestamos en mora");
             System.out.println("16. Resumen general");
+            System.out.println("17. Actualizar cliente");
+            System.out.println("18. Eliminar cliente");
+            System.out.println("19. Actualizar empleado");
+            System.out.println("20. Eliminar empleado");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
 
@@ -147,6 +151,22 @@ public class MenuPrincipal {
                     case 16:
                         reportesController.mostrarResumenGeneral();
                         break;
+                        
+                    case 17:
+                        actualizarCliente();
+                        break;
+                        
+                    case 18:
+                        eliminarCliente();
+                        break;
+                        
+                    case 19:
+                        actualizarEmpleado();
+                        break;
+                        
+                    case 20:
+                    eliminarEmpleado();
+                    break;
 
                     case 0:
                         System.out.println("Gracias por utilizar CrediYa.");
@@ -205,6 +225,90 @@ public class MenuPrincipal {
             }
         }
     }
+    
+    private void actualizarEmpleado() {
+
+        System.out.println("\n--- ACTUALIZAR EMPLEADO ---");
+
+        // Mostrar empleados registrados
+        listarEmpleados();
+
+        try {
+            System.out.print("Ingrese el ID del empleado: ");
+            int id = Integer.parseInt(teclado.nextLine());
+
+            // Verificar que el empleado exista
+            Empleado empleadoExistente = empleadoController.listarEmpleados()
+                    .stream()
+                    .filter(e -> e.getId() == id)
+                    .findFirst()
+                    .orElse(null);
+
+            if (empleadoExistente == null) {
+                System.out.println("No existe un empleado con ese ID.");
+                return;
+            }
+
+            System.out.print("Nuevo nombre: ");
+            String nombre = teclado.nextLine();
+
+            System.out.print("Nuevo documento: ");
+            String documento = teclado.nextLine();
+
+            System.out.print("Nuevo correo: ");
+            String correo = teclado.nextLine();
+
+            System.out.print("Nuevo rol: ");
+            String rol = teclado.nextLine();
+
+            System.out.print("Nuevo salario: ");
+            double salario = Double.parseDouble(teclado.nextLine());
+
+            empleadoController.actualizarEmpleado(
+                    id, nombre, documento, correo, rol, salario
+            );
+
+        } catch (NumberFormatException e) {
+            System.out.println("El ID y el salario deben ser valores numericos.");
+        }
+    }
+    
+        private void eliminarEmpleado() {
+
+        System.out.println("\n--- ELIMINAR EMPLEADO ---");
+
+        // Mostrar empleados registrados
+        listarEmpleados();
+
+        try {
+            System.out.print("Ingrese el ID del empleado que desea eliminar: ");
+            int id = Integer.parseInt(teclado.nextLine());
+
+            // Verificar que el empleado exista
+            Empleado empleadoExistente = empleadoController.listarEmpleados()
+                    .stream()
+                    .filter(e -> e.getId() == id)
+                    .findFirst()
+                    .orElse(null);
+
+            if (empleadoExistente == null) {
+                System.out.println("No existe un empleado con ese ID.");
+                return;
+            }
+
+            System.out.print("¿Confirma que desea eliminar este empleado? (S/N): ");
+            String confirmacion = teclado.nextLine();
+
+            if (confirmacion.equalsIgnoreCase("S")) {
+                empleadoController.eliminarEmpleado(id);
+            } else {
+                System.out.println("Operacion cancelada.");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("El ID debe ser un numero.");
+        }
+    }
 
     private void registrarCliente() {
 
@@ -238,6 +342,85 @@ public class MenuPrincipal {
                 cliente.mostrarInformacion();
                 System.out.println("------------------------------");
             }
+        }
+    }
+    
+    private void actualizarCliente() {
+
+        System.out.println("\n--- ACTUALIZAR CLIENTE ---");
+
+        // Mostrar clientes registrados
+        listarClientes();
+
+        try {
+            System.out.print("Ingrese el ID del cliente: ");
+            int id = Integer.parseInt(teclado.nextLine());
+
+            // Verificar que el cliente exista
+            Cliente clienteExistente = clienteController.listarClientes()
+                    .stream()
+                    .filter(c -> c.getId() == id)
+                    .findFirst()
+                    .orElse(null);
+
+            if (clienteExistente == null) {
+                System.out.println("No existe un cliente con ese ID.");
+                return;
+            }
+
+            System.out.print("Nuevo nombre: ");
+            String nombre = teclado.nextLine();
+
+            System.out.print("Nuevo documento: ");
+            String documento = teclado.nextLine();
+
+            System.out.print("Nuevo correo: ");
+            String correo = teclado.nextLine();
+
+            System.out.print("Nuevo telefono: ");
+            String telefono = teclado.nextLine();
+
+            clienteController.actualizarCliente(
+                    id, nombre, documento, correo, telefono
+            );
+
+        } catch (NumberFormatException e) {
+            System.out.println("El ID debe ser un numero.");
+        }
+    }
+    
+    private void eliminarCliente() {
+
+        System.out.println("\n--- ELIMINAR CLIENTE ---");
+
+        listarClientes();
+
+        try {
+            System.out.print("Ingrese el ID del cliente que desea eliminar: ");
+            int id = Integer.parseInt(teclado.nextLine());
+
+            Cliente clienteExistente = clienteController.listarClientes()
+                    .stream()
+                    .filter(c -> c.getId() == id)
+                    .findFirst()
+                    .orElse(null);
+
+            if (clienteExistente == null) {
+                System.out.println("No existe un cliente con ese ID.");
+                return;
+            }
+
+            System.out.print("¿Confirma que desea eliminar este cliente? (S/N): ");
+            String confirmacion = teclado.nextLine();
+
+            if (confirmacion.equalsIgnoreCase("S")) {
+                clienteController.eliminarCliente(id);
+            } else {
+                System.out.println("Operacion cancelada.");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("El ID debe ser un numero.");
         }
     }
 

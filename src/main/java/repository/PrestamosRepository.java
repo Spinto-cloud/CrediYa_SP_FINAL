@@ -22,7 +22,7 @@ public class PrestamosRepository implements PrestamosDAO {
                 + "tasa_interes, numero_cuotas, fecha_inicio, estado) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return false;
@@ -66,7 +66,7 @@ public class PrestamosRepository implements PrestamosDAO {
 
         String sql = "SELECT * FROM prestamos ORDER BY id_prestamo";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return prestamos;
@@ -132,7 +132,7 @@ public class PrestamosRepository implements PrestamosDAO {
 
         String sql = "UPDATE prestamos SET estado = ? WHERE id_prestamo = ?";
 
-        try (Connection conexion = Conexion.conectar()) {
+        try (Connection conexion = Conexion.getInstancia().conectar()) {
 
             if (conexion == null) {
                 return false;

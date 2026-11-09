@@ -120,4 +120,103 @@ public class EmpleadoController {
     public List<Empleado> listarEmpleados() {
         return new ArrayList<>(empleados);
     }
+    
+    public void actualizarEmpleado(
+            int id,
+            String nombre,
+            String documento,
+            String correo,
+            String rol,
+            double salario) {
+
+        if (nombre == null || nombre.trim().isEmpty()
+                || documento == null || documento.trim().isEmpty()
+                || correo == null || correo.trim().isEmpty()
+                || rol == null || rol.trim().isEmpty()
+                || salario <= 0) {
+
+            System.out.println("Los datos del empleado son inválidos.");
+            return;
+        }
+
+        // Verificar que el empleado exista
+        Empleado empleadoExistente = empleados.stream()
+                .filter(e -> e.getId() == id)
+                .findFirst()
+                .orElse(null);
+
+        if (empleadoExistente == null) {
+            System.out.println("No existe un empleado con ese ID.");
+            return;
+        }
+
+        // Validar que el documento no pertenezca a otro empleado
+        boolean documentoDuplicado = empleados.stream()
+                .anyMatch(e -> e.getDocumento().equals(documento)
+                        && e.getId() != id);
+
+        if (documentoDuplicado) {
+            System.out.println("Otro empleado ya tiene ese documento.");
+            return;
+        }
+
+        Empleado empleadoActualizado = new Empleado(
+                id,
+                nombre,
+                documento,
+                correo,
+                rol,
+                salario
+        );
+
+        // Actualizar primero en MySQL
+        boolean actualizado = empleadoRepository.actualizar(
+                empleadoActualizado
+        );
+
+        if (actualizado) {
+
+            int posicion = empleados.indexOf(empleadoExistente);
+
+            empleados.set(posicion, empleadoActualizado);
+
+            // Sincronizar archivo TXT
+            archivoEmpleado.guardar(empleados);
+
+            System.out.println("Empleado actualizado correctamente.");
+
+        } else {
+            System.out.println("No fue posible actualizar el empleado.");
+        }
+    }
+    
+        public void eliminarEmpleado(int id) {
+
+        // Verificar que el empleado exista
+        Empleado empleadoExistente = empleados.stream()
+                .filter(e -> e.getId() == id)
+                .findFirst()
+                .orElse(null);
+
+        if (empleadoExistente == null) {
+            System.out.println("No existe un empleado con ese ID.");
+            return;
+        }
+
+        // Eliminar primero de MySQL
+        boolean eliminado = empleadoRepository.eliminar(id);
+
+        if (eliminado) {
+
+            empleados.remove(empleadoExistente);
+
+            // Actualizar archivo TXT
+            archivoEmpleado.guardar(empleados);
+
+            System.out.println("Empleado eliminado correctamente.");
+
+        } else {
+            System.out.println("No fue posible eliminar el empleado.");
+        }
+    }
 }
