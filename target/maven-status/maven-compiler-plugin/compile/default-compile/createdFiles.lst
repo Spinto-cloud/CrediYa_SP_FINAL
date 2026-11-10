@@ -25,7 +25,9 @@ repository\PrestamosDAO.class
 factory\ControllerFactory.class
 repository\CuotasRepository.class
 repository\PrestamosRepository.class
+security\PruebaVariable.class
 repository\ArchivoEmpleado.class
+security\Seguridad.class
 repository\ClienteDAO.class
 repository\ArchivoCliente.class
 controller\PrestamosController.class

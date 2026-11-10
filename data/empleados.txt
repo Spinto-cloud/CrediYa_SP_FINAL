@@ -2,3 +2,4 @@
 2|Juanita Pinto|1097919969|jp@gmail.com|Auxiliar de cartera|2000000.0
 3|Pedro Perez Acevedo|56492393|ppa@hotmail.com|Jefe operativo|2400000.0
 5|Carlos Valbuena|1095689456|cv@gmail.com|Asesor Comercial|2500000.0
+6|Pedro Mojica|1121456|pp@gmail.com|Jefe de contabilidad|2500000.0

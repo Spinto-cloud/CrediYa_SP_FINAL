@@ -15,6 +15,8 @@ import model.Cliente;
 import model.Prestamos;
 import model.Pagos;
 
+import security.Seguridad;
+
 public class MenuPrincipal {
 
     private final Scanner teclado = new Scanner(System.in);
@@ -86,11 +88,15 @@ public class MenuPrincipal {
                 switch (opcion) {
 
                     case 1:
-                        registrarEmpleado();
+                        if (Seguridad.validarAdministrador(teclado)) {
+                            registrarEmpleado();
+                        }
                         break;
 
                     case 2:
-                        listarEmpleados();
+                        if (Seguridad.validarAdministrador(teclado)) {
+                            listarEmpleados();
+                        }
                         break;
 
                     case 3:
@@ -157,16 +163,22 @@ public class MenuPrincipal {
                         break;
                         
                     case 18:
-                        eliminarCliente();
+                        if (Seguridad.validarAdministrador(teclado)) {
+                            eliminarCliente();
+                        }
                         break;
                         
                     case 19:
-                        actualizarEmpleado();
+                        if (Seguridad.validarAdministrador(teclado)) {
+                            actualizarEmpleado();
+                        }
                         break;
                         
                     case 20:
-                    eliminarEmpleado();
-                    break;
+                        if (Seguridad.validarAdministrador(teclado)) {
+                            eliminarEmpleado();
+                        }
+                        break;
 
                     case 0:
                         System.out.println("Gracias por utilizar CrediYa.");
