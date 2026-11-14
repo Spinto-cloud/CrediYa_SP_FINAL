@@ -7,6 +7,7 @@ import controller.ClienteController;
 import controller.PrestamosController;
 import controller.PagosController;
 import controller.ReportesController;
+import controller.GestorPagos;
 
 import factory.ControllerFactory;
 
@@ -17,6 +18,8 @@ import model.Pagos;
 
 import security.Seguridad;
 
+import exception.PrestamoNoEncontradoException;
+
 public class MenuPrincipal {
 
     private final Scanner teclado = new Scanner(System.in);
@@ -26,6 +29,7 @@ public class MenuPrincipal {
     private final PrestamosController prestamosController;
     private final PagosController pagosController;
     private final ReportesController reportesController;
+    private final GestorPagos gestorPagos;
 
     // Constructor: utiliza Factory para crear los controladores
     public MenuPrincipal() {
@@ -43,6 +47,11 @@ public class MenuPrincipal {
 
         pagosController = factory.crearPagosController(
                 prestamosController
+        );
+        
+        gestorPagos = new GestorPagos(
+                prestamosController,
+                pagosController
         );
 
         reportesController = factory.crearReportesController(
@@ -79,6 +88,7 @@ public class MenuPrincipal {
             System.out.println("18. Eliminar cliente");
             System.out.println("19. Actualizar empleado");
             System.out.println("20. Eliminar empleado");
+            System.out.println("21. Consultar pagos del ultimo mes");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
 
@@ -177,6 +187,11 @@ public class MenuPrincipal {
                     case 20:
                         if (Seguridad.validarAdministrador(teclado)) {
                             eliminarEmpleado();
+                        }
+                        break;
+                        
+                    case 21:
+                        gestorPagos.mostrarPagosUltimoMes();
                         }
                         break;
 
@@ -493,16 +508,20 @@ public class MenuPrincipal {
             System.out.println("Monto del pago: ");
             double monto = Double.parseDouble(teclado.nextLine());
 
-            pagosController.registrarPago(idPrestamo, monto);
+            gestorPagos.registrarPago(idPrestamo, monto);
 
         } catch (NumberFormatException e) {
             System.out.println(
-                    "Error: Por favor ingrese valores numericos validos"
-            );
+                    "Error: Por favor ingrese valores numericos validos");
+        } catch (PrestamoNoEncontradoException e) {
+
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void listarPagos() {
+
+        gestorPagos.mostrarHistorial();
 
         System.out.println("\n--- HISTORIAL DE PAGOS ---");
 

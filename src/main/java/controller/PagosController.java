@@ -132,7 +132,7 @@ public class PagosController {
             double nuevoSaldo = calcularSaldo(idPrestamo);
 
             if (nuevoSaldo <= 0.1) {
-                prestamoEncontrado.setEstado("Pagado");
+                prestamoEncontrado.setEstado("CANCELADO");
             }
 
             LocalDate fechaPago = LocalDate.now();
